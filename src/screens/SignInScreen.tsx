@@ -71,7 +71,6 @@ function SignInScreen({ navigation }: Props) {
                 keyboardType="email-address"
                 placeholder="you@example.com"
                 containerStyle={styles.inputContainer}
-                label="Email"
               />
             </View>
 
@@ -83,7 +82,6 @@ function SignInScreen({ navigation }: Props) {
                 secureTextEntry
                 placeholder="Enter your password"
                 containerStyle={styles.inputContainer}
-                label="Password"
               />
             </View>
 

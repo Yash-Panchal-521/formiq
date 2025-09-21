@@ -40,14 +40,14 @@ export const createVariables = (theme: MD3Theme) => ({
   },
 
   typography: {
-    h1: { fontSize: 32, fontWeight: "800", letterSpacing: 0.3 }, // hero headers
-    h2: { fontSize: 24, fontWeight: "700" },
-    h3: { fontSize: 20, fontWeight: "600" },
-    body: { fontSize: 16, fontWeight: "400" },
-    label: { fontSize: 14, fontWeight: "500", letterSpacing: 0.5 },
+    h1: { fontSize: 32, fontWeight: "800" as const, letterSpacing: 0.3 }, // hero headers
+    h2: { fontSize: 24, fontWeight: "700" as const },
+    h3: { fontSize: 20, fontWeight: "600" as const },
+    body: { fontSize: 16, fontWeight: "400" as const },
+    label: { fontSize: 14, fontWeight: "500" as const, letterSpacing: 0.5 },
     caption: {
       fontSize: 12,
-      fontWeight: "400",
+      fontWeight: "400" as const,
       color: theme.colors.onSurfaceVariant,
     },
   },

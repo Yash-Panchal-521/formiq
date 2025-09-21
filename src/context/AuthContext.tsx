@@ -45,6 +45,7 @@ interface AuthContextType {
   signUp: (payload: SignUpPayload) => void;
   signIn: (payload: SignInPayload) => void;
   signOut: () => void;
+  updateUser: (user: UserProfile) => void;
 }
 
 interface AccountRecord {
@@ -104,7 +105,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       ...prev,
       [email]: { user: newUser, password: payload.password },
     }));
-    setUser(newUser);
   };
 
   const signIn = ({ email, password }: SignInPayload) => {
@@ -120,6 +120,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(null);
   };
 
+  const updateUser = (user: UserProfile) => {
+    setUser(user);
+  };
+
   const value = useMemo(
     () => ({
       isSignedIn: Boolean(user),
@@ -127,6 +131,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       signUp,
       signIn,
       signOut,
+      updateUser,
     }),
     [user]
   );

@@ -1,5 +1,6 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
+  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
   SafeAreaView,
@@ -19,6 +20,7 @@ import {
   FitnessGoal,
   FitnessLevel,
   useAuth,
+  UserProfile,
 } from "../context/AuthContext";
 import { AuthStackParamList } from "../navigation/types";
 import { useTheme } from "../theme/ThemeProvider";
@@ -37,6 +39,15 @@ type OptionMeta<T> = {
 };
 
 const TOTAL_STEPS = 8;
+
+const PROFILE_PROGRESS_MESSAGES = [
+  "Creating your profile...",
+  "Setting up your fitness dashboard...",
+  "AI Coach is analyzing your preferences...",
+  "Designing a personalized workout plan...",
+  "Calculating your ideal fitness path...",
+  "Optimizing workouts for your goals...",
+] as const;
 
 const birthGenderOptions: OptionMeta<BirthGender>[] = [
   { value: "Male", label: "Male", icon: "male-outline" },
@@ -77,6 +88,9 @@ const equipmentOptions: OptionMeta<EquipmentOption>[] = [
   { value: "None", label: "None", icon: "remove-circle-outline" },
 ];
 
+const wait = (ms: number) =>
+  new Promise<void>((resolve) => setTimeout(resolve, ms));
+
 type Props = NativeStackScreenProps<AuthStackParamList, "SignUp">;
 
 interface FormState {
@@ -112,7 +126,7 @@ const initialState: FormState = {
 };
 
 function SignUpScreen({ navigation }: Props) {
-  const { signUp } = useAuth();
+  const { signUp, updateUser } = useAuth();
   const { theme, variables } = useTheme();
   const styles = useMemo(
     () => createStyles(theme.colors, variables),
@@ -123,6 +137,16 @@ function SignUpScreen({ navigation }: Props) {
   const [step, setStep] = useState(1);
   const [error, setError] = useState<string | null>(null);
   const [heightUnit, setHeightUnit] = useState<HeightUnit>("metric");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isCreatingProfile, setIsCreatingProfile] = useState(false);
+  const [progressIndex, setProgressIndex] = useState(0);
+
+  const isMountedRef = useRef(true);
+  useEffect(() => {
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   const accentPalette = useMemo(
     () =>
@@ -211,7 +235,7 @@ function SignUpScreen({ navigation }: Props) {
         return null;
       case 3:
         if (heightUnit === "metric" && !form.heightCm) {
-          return "Please provide your height in centimetres.";
+          return "Please provide your height in centimeters.";
         }
         if (heightUnit === "imperial" && !form.heightFt) {
           return "Please provide your height in feet.";
@@ -256,41 +280,83 @@ function SignUpScreen({ navigation }: Props) {
     }
   };
 
-  const handleNext = () => {
+  const startProfileSetup = async (user: UserProfile) => {
+    for (let i = 0; i < PROFILE_PROGRESS_MESSAGES.length; i += 1) {
+      if (!isMountedRef.current) {
+        return;
+      }
+      setProgressIndex(i);
+      await wait(1200);
+    }
+
+    if (!isMountedRef.current) {
+      return;
+    }
+
+    updateUser(user);
+  };
+
+  const handleBack = () => {
+    if (isSubmitting) {
+      return;
+    }
+    if (step > 1) {
+      setStep((prev) => prev - 1);
+      setError(null);
+    }
+  };
+
+  const handleNext = async () => {
+    if (isSubmitting) {
+      return;
+    }
+
     const validationError = validateCurrentStep();
     if (validationError) {
       setError(validationError);
       return;
     }
+
     setError(null);
+
     if (step < TOTAL_STEPS) {
       setStep((prev) => prev + 1);
-    } else {
-      try {
-        signUp({
-          name: form.name.trim(),
-          email: form.email.trim(),
-          password: form.password,
-          birthGender: form.birthGender!,
-          fitnessGoal: form.fitnessGoal!,
-          heightCm: form.heightCm || undefined,
-          heightFt: form.heightFt || undefined,
-          heightIn: form.heightIn || undefined,
-          currentWeight: form.currentWeight,
-          targetWeight: form.targetWeight,
-          fitnessLevel: form.fitnessLevel!,
-          equipment: form.equipment,
-        });
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Unable to sign up");
-      }
+      return;
     }
-  };
 
-  const handleBack = () => {
-    if (step > 1) {
-      setStep((prev) => prev - 1);
-      setError(null);
+    setIsSubmitting(true);
+
+    try {
+      const normalizedEmail = form.email.trim();
+      const newUser = {
+        name: form.name.trim(),
+        email: normalizedEmail,
+        password: form.password,
+        birthGender: form.birthGender!,
+        fitnessGoal: form.fitnessGoal!,
+        heightCm: form.heightCm || undefined,
+        heightFt: form.heightFt || undefined,
+        heightIn: form.heightIn || undefined,
+        currentWeight: form.currentWeight,
+        targetWeight: form.targetWeight,
+        fitnessLevel: form.fitnessLevel!,
+        equipment: form.equipment,
+      };
+      signUp(newUser);
+
+      if (!isMountedRef.current) {
+        return;
+      }
+
+      setIsCreatingProfile(true);
+      setProgressIndex(0);
+      await startProfileSetup(newUser);
+    } catch (err) {
+      if (isMountedRef.current) {
+        setError(err instanceof Error ? err.message : "Unable to sign up");
+        setIsCreatingProfile(false);
+        setIsSubmitting(false);
+      }
     }
   };
 
@@ -317,6 +383,7 @@ function SignUpScreen({ navigation }: Props) {
         borderColor={theme.colors.outline}
         surfaceColor={theme.colors.surfaceVariant}
         layout={layout}
+        disabled={isSubmitting}
       />
     );
   };
@@ -331,6 +398,7 @@ function SignUpScreen({ navigation }: Props) {
           onPress={() => setHeightUnit("metric")}
           themeColors={theme.colors}
           variables={variables}
+          disabled={isSubmitting}
         />
         <ToggleButton
           label="Feet & Inches"
@@ -339,6 +407,7 @@ function SignUpScreen({ navigation }: Props) {
           onPress={() => setHeightUnit("imperial")}
           themeColors={theme.colors}
           variables={variables}
+          disabled={isSubmitting}
         />
       </View>
       {heightUnit === "metric" ? (
@@ -351,12 +420,13 @@ function SignUpScreen({ navigation }: Props) {
             placeholder="e.g. 175"
             placeholderTextColor={theme.colors.onSurfaceVariant}
             keyboardType="numeric"
+            editable={!isSubmitting}
           />
         </View>
       ) : (
         <View style={styles.field}>
           <Text style={styles.label}>Height (ft / in)</Text>
-          <View style={styles.row}>
+          <View style={styles.column}>
             <TextInput
               style={[styles.input, styles.halfInput]}
               value={form.heightFt}
@@ -364,6 +434,7 @@ function SignUpScreen({ navigation }: Props) {
               placeholder="ft"
               placeholderTextColor={theme.colors.onSurfaceVariant}
               keyboardType="numeric"
+              editable={!isSubmitting}
             />
             <View style={styles.spacer} />
             <TextInput
@@ -373,6 +444,7 @@ function SignUpScreen({ navigation }: Props) {
               placeholder="in"
               placeholderTextColor={theme.colors.onSurfaceVariant}
               keyboardType="numeric"
+              editable={!isSubmitting}
             />
           </View>
         </View>
@@ -441,6 +513,7 @@ function SignUpScreen({ navigation }: Props) {
                 placeholder="Add your current weight"
                 placeholderTextColor={theme.colors.onSurfaceVariant}
                 keyboardType="numeric"
+                editable={!isSubmitting}
               />
             </View>
           </View>
@@ -464,6 +537,7 @@ function SignUpScreen({ navigation }: Props) {
                 placeholder="Add your target weight"
                 placeholderTextColor={theme.colors.onSurfaceVariant}
                 keyboardType="numeric"
+                editable={!isSubmitting}
               />
             </View>
           </View>
@@ -511,6 +585,7 @@ function SignUpScreen({ navigation }: Props) {
                 onChangeText={(value) => updateForm("name", value)}
                 placeholder="Full name"
                 placeholderTextColor={theme.colors.onSurfaceVariant}
+                editable={!isSubmitting}
               />
             </View>
             <View style={styles.field}>
@@ -523,6 +598,7 @@ function SignUpScreen({ navigation }: Props) {
                 placeholderTextColor={theme.colors.onSurfaceVariant}
                 autoCapitalize="none"
                 keyboardType="email-address"
+                editable={!isSubmitting}
               />
             </View>
             <View style={styles.field}>
@@ -534,6 +610,7 @@ function SignUpScreen({ navigation }: Props) {
                 placeholder="Create a password"
                 placeholderTextColor={theme.colors.onSurfaceVariant}
                 secureTextEntry
+                editable={!isSubmitting}
               />
             </View>
             <View style={styles.field}>
@@ -545,6 +622,7 @@ function SignUpScreen({ navigation }: Props) {
                 placeholder="Re-enter password"
                 placeholderTextColor={theme.colors.onSurfaceVariant}
                 secureTextEntry
+                editable={!isSubmitting}
               />
             </View>
           </View>
@@ -561,21 +639,24 @@ function SignUpScreen({ navigation }: Props) {
         style={styles.flex}
       >
         <ScrollView contentContainerStyle={styles.container}>
-          <View style={styles.contentCard}>
+          <View
+            style={styles.contentCard}
+            pointerEvents={isCreatingProfile ? "none" : "auto"}
+          >
             <View style={styles.header}>
               <TouchableOpacity
                 style={[
                   styles.backButton,
-                  step === 1 && styles.backButtonDisabled,
+                  (step === 1 || isSubmitting) && styles.backButtonDisabled,
                 ]}
                 onPress={handleBack}
-                disabled={step === 1}
+                disabled={step === 1 || isSubmitting}
               >
                 <Ionicons
                   name="arrow-back"
                   size={22}
                   color={
-                    step === 1
+                    step === 1 || isSubmitting
                       ? theme.colors.onSurfaceVariant
                       : theme.colors.onSurface
                   }
@@ -596,15 +677,23 @@ function SignUpScreen({ navigation }: Props) {
             <View style={styles.actions}>
               {step > 1 ? (
                 <TouchableOpacity
-                  style={styles.secondaryButton}
+                  style={[
+                    styles.secondaryButton,
+                    isSubmitting && styles.secondaryButtonDisabled,
+                  ]}
                   onPress={handleBack}
+                  disabled={isSubmitting}
                 >
                   <Text style={styles.secondaryText}>Back</Text>
                 </TouchableOpacity>
               ) : null}
               <TouchableOpacity
-                style={styles.primaryButton}
+                style={[
+                  styles.primaryButton,
+                  isSubmitting && styles.primaryButtonDisabled,
+                ]}
                 onPress={handleNext}
+                disabled={isSubmitting}
               >
                 <Text style={styles.primaryText}>
                   {step === TOTAL_STEPS ? "Create Account" : "Continue"}
@@ -614,6 +703,24 @@ function SignUpScreen({ navigation }: Props) {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+
+      {isCreatingProfile ? (
+        <View style={styles.progressOverlay}>
+          <View style={styles.progressCard}>
+            <ActivityIndicator size="large" color={theme.colors.primary} />
+            <Text style={styles.progressMessage}>
+              {
+                PROFILE_PROGRESS_MESSAGES[
+                  Math.min(progressIndex, PROFILE_PROGRESS_MESSAGES.length - 1)
+                ]
+              }
+            </Text>
+            <Text style={styles.progressMeta}>
+              {progressIndex + 1} / {PROFILE_PROGRESS_MESSAGES.length}
+            </Text>
+          </View>
+        </View>
+      ) : null}
     </SafeAreaView>
   );
 }
@@ -631,6 +738,7 @@ function OptionCard({
   borderColor,
   surfaceColor,
   layout,
+  disabled,
 }: {
   label: string;
   iconName: IoniconName;
@@ -644,6 +752,7 @@ function OptionCard({
   borderColor: string;
   surfaceColor: string;
   layout: "half" | "full";
+  disabled: boolean;
 }) {
   const sizeStyle =
     layout === "half"
@@ -669,6 +778,7 @@ function OptionCard({
         },
       ]}
       onPress={onPress}
+      disabled={disabled}
     >
       <View
         style={[optionStyles.iconBadge, { backgroundColor: badgeBackground }]}
@@ -687,6 +797,7 @@ type ToggleButtonProps = {
   onPress: () => void;
   themeColors: MD3Theme["colors"];
   variables: ThemeVariables;
+  disabled: boolean;
 };
 
 function ToggleButton({
@@ -696,6 +807,7 @@ function ToggleButton({
   onPress,
   themeColors,
   variables,
+  disabled,
 }: ToggleButtonProps) {
   const backgroundColor = active
     ? themeColors.primary
@@ -716,6 +828,7 @@ function ToggleButton({
         },
       ]}
       onPress={onPress}
+      disabled={disabled}
     >
       <Ionicons
         name={iconName}
@@ -757,7 +870,8 @@ const optionStyles = StyleSheet.create({
   },
   label: {
     fontSize: 16,
-    fontWeight: "600",
+    fontWeight: "600" as const,
+    textAlign: "left",
   },
 });
 
@@ -775,7 +889,7 @@ const toggleStyles = StyleSheet.create({
   },
   label: {
     fontSize: 14,
-    fontWeight: "600",
+    fontWeight: "600" as const,
   },
 });
 
@@ -881,7 +995,6 @@ const createStyles = (
       textAlign: "center",
       color: colors.onSurfaceVariant,
       fontSize: variables.typography.body.fontSize,
-      marginTop: variables.spacing.md,
     },
     linkText: {
       textAlign: "center",
@@ -910,11 +1023,10 @@ const createStyles = (
       paddingVertical: variables.spacing.sm + 4,
       fontSize: variables.typography.body.fontSize,
     },
-    row: {
-      flexDirection: "row",
-      alignItems: "center",
-      width: "100%" as const,
-      maxWidth: 520,
+    column: {
+      flexDirection: "column",
+      gap: variables.spacing.sm,
+      width: "100%",
       minWidth: 280,
     },
     spacer: {
@@ -945,9 +1057,12 @@ const createStyles = (
       borderColor: colors.outline,
       backgroundColor: colors.surfaceVariant,
     },
+    secondaryButtonDisabled: {
+      opacity: 0.6,
+    },
     secondaryText: {
       color: colors.onSurface,
-      fontWeight: "600",
+      fontWeight: "600" as const,
     },
     primaryButton: {
       borderRadius: variables.radius.md,
@@ -955,9 +1070,12 @@ const createStyles = (
       paddingVertical: variables.spacing.sm + 6,
       backgroundColor: colors.primary,
     },
+    primaryButtonDisabled: {
+      opacity: 0.7,
+    },
     primaryText: {
       color: colors.onPrimary,
-      fontWeight: "700",
+      fontWeight: "700" as const,
       fontSize: variables.typography.body.fontSize,
     },
     toggleRow: {
@@ -975,6 +1093,41 @@ const createStyles = (
       minWidth: 280,
       alignItems: "center",
       marginBottom: variables.spacing.lg,
+    },
+    progressOverlay: {
+      position: "absolute",
+      top: 0,
+      bottom: 0,
+      left: 0,
+      right: 0,
+      backgroundColor: "rgba(8, 12, 20, 0.7)",
+      alignItems: "center",
+      justifyContent: "center",
+      paddingHorizontal: variables.spacing.lg,
+    },
+    progressCard: {
+      width: "100%" as const,
+      maxWidth: 360,
+      backgroundColor: colors.surface,
+      borderRadius: variables.radius.lg,
+      paddingVertical: variables.spacing.lg,
+      paddingHorizontal: variables.spacing.lg,
+      borderWidth: 1,
+      borderColor: colors.outline,
+      alignItems: "center",
+    },
+    progressMessage: {
+      marginTop: variables.spacing.md,
+      textAlign: "center",
+      color: colors.onSurface,
+      fontSize: variables.typography.body.fontSize + 2,
+      fontWeight: "600" as const,
+    },
+    progressMeta: {
+      marginTop: variables.spacing.sm,
+      textAlign: "center",
+      color: colors.onSurfaceVariant,
+      fontSize: variables.typography.caption.fontSize,
     },
   });
 };
