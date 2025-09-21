@@ -54,9 +54,28 @@ interface AccountRecord {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
+const DEMO_USER: UserProfile = {
+  name: "John Doe",
+  email: "demo@example.com",
+  birthGender: "Male",
+  fitnessGoal: "Build Muscle",
+  heightCm: "175",
+  currentWeight: "75",
+  targetWeight: "80",
+  fitnessLevel: "Intermediate",
+  equipment: ["Dumbbells", "Weight Machine"],
+};
+
+const DEMO_ACCOUNT: AccountRecord = {
+  user: DEMO_USER,
+  password: "demo123",
+};
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<UserProfile | null>(null);
-  const [accounts, setAccounts] = useState<Record<string, AccountRecord>>({});
+  const [accounts, setAccounts] = useState<Record<string, AccountRecord>>({
+    [DEMO_USER.email]: DEMO_ACCOUNT,
+  });
 
   const signUp = (payload: SignUpPayload) => {
     const email = payload.email.trim().toLowerCase();
