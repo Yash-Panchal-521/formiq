@@ -1,9 +1,13 @@
 // components/Input.tsx
 import React from "react";
-import { TextInput, StyleSheet, TextInputProps } from "react-native";
+import { TextInput, StyleSheet, TextInputProps, ViewStyle } from "react-native";
 import { useTheme } from "../theme/ThemeProvider";
 
-export const Input: React.FC<TextInputProps> = ({ style, ...props }) => {
+interface InputProps extends TextInputProps {
+  containerStyle?: ViewStyle;
+}
+
+export const Input: React.FC<InputProps> = ({ style, containerStyle, ...props }) => {
   const { variables } = useTheme();
 
   return (
