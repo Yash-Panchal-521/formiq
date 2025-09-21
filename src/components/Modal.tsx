@@ -1,6 +1,7 @@
 // components/Modal.tsx
 import React from "react";
 import { Modal as RNModal, View, StyleSheet } from "react-native";
+import { useTheme } from "../theme/ThemeProvider";
 
 interface Props {
   visible: boolean;
@@ -9,6 +10,7 @@ interface Props {
 }
 
 export const Modal: React.FC<Props> = ({ visible, onClose, children }) => {
+  const { variables } = useTheme();
   return (
     <RNModal
       visible={visible}
@@ -17,7 +19,16 @@ export const Modal: React.FC<Props> = ({ visible, onClose, children }) => {
       onRequestClose={onClose}
     >
       <View style={styles.overlay}>
-        <View style={styles.content}>{children}</View>
+        <View
+          style={[
+            styles.content,
+            {
+              backgroundColor: variables.colors.surface,
+            },
+          ]}
+        >
+          {children}
+        </View>
       </View>
     </RNModal>
   );
@@ -26,14 +37,14 @@ export const Modal: React.FC<Props> = ({ visible, onClose, children }) => {
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.4)",
+    backgroundColor: "rgba(0,0,0,0.45)",
     justifyContent: "center",
     alignItems: "center",
+    padding: 24,
   },
   content: {
-    backgroundColor: "white",
+    width: "100%",
+    borderRadius: 20,
     padding: 20,
-    borderRadius: 12,
-    width: "80%",
   },
 });

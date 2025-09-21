@@ -18,11 +18,19 @@ export const Text: React.FC<Props> = ({
   ...props
 }) => {
   const { variables } = useTheme();
+  const map = {
+    h1: variables.typography.h1,
+    h2: variables.typography.h2,
+    body: variables.typography.body,
+    caption: variables.typography.caption,
+    label: variables.typography.label,
+  };
+
   return (
     <RNText
       {...props}
       style={[
-        styles[variant],
+        map[variant],
         { color: color ?? variables.colors.text.primary },
         style,
       ]}
@@ -31,11 +39,3 @@ export const Text: React.FC<Props> = ({
     </RNText>
   );
 };
-
-const styles = StyleSheet.create({
-  h1: { fontSize: 28, fontWeight: "700" },
-  h2: { fontSize: 22, fontWeight: "600" },
-  body: { fontSize: 16, fontWeight: "400" },
-  caption: { fontSize: 12, fontWeight: "400" },
-  label: { fontSize: 14, fontWeight: "500" },
-});

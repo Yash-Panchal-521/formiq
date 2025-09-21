@@ -1,6 +1,6 @@
 // components/Toast.tsx
 import React from "react";
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text as RNText, StyleSheet } from "react-native";
 import { useTheme } from "../theme/ThemeProvider";
 
 interface Props {
@@ -17,9 +17,14 @@ export const Toast: React.FC<Props> = ({ message, type = "info" }) => {
       ? variables.colors.error
       : variables.colors.surfaceVariant;
 
+  const color =
+    type === "info"
+      ? variables.colors.text.primary
+      : variables.colors.text.onPrimary;
+
   return (
     <View style={[styles.toast, { backgroundColor: bg }]}>
-      <Text style={styles.text}>{message}</Text>
+      <RNText style={[styles.text, { color }]}>{message}</RNText>
     </View>
   );
 };
@@ -27,12 +32,11 @@ export const Toast: React.FC<Props> = ({ message, type = "info" }) => {
 const styles = StyleSheet.create({
   toast: {
     padding: 12,
-    borderRadius: 8,
-    marginVertical: 4,
+    borderRadius: 12,
+    marginVertical: 6,
     alignItems: "center",
   },
   text: {
-    color: "white",
-    fontWeight: "600",
+    fontWeight: "700",
   },
 });

@@ -1,6 +1,6 @@
 // components/Checkbox.tsx
 import React from "react";
-import { TouchableOpacity, StyleSheet } from "react-native";
+import { TouchableOpacity, StyleSheet, View } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useTheme } from "../theme/ThemeProvider";
 
@@ -12,13 +12,26 @@ interface Props {
 export const Checkbox: React.FC<Props> = ({ checked, onChange }) => {
   const { variables } = useTheme();
   return (
-    <TouchableOpacity style={styles.box} onPress={onChange}>
-      {checked && (
+    <TouchableOpacity
+      style={[
+        styles.box,
+        {
+          borderColor: variables.colors.border,
+          backgroundColor: checked
+            ? variables.colors.button.primary
+            : "transparent",
+        },
+      ]}
+      onPress={onChange}
+    >
+      {checked ? (
         <MaterialCommunityIcons
           name="check"
-          size={20}
+          size={18}
           color={variables.colors.text.onPrimary}
         />
+      ) : (
+        <View />
       )}
     </TouchableOpacity>
   );
@@ -26,9 +39,9 @@ export const Checkbox: React.FC<Props> = ({ checked, onChange }) => {
 
 const styles = StyleSheet.create({
   box: {
-    width: 24,
-    height: 24,
-    borderRadius: 4,
+    width: 22,
+    height: 22,
+    borderRadius: 6,
     borderWidth: 2,
     justifyContent: "center",
     alignItems: "center",
