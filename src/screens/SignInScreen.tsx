@@ -33,19 +33,29 @@ function SignInScreen({ navigation }: Props) {
   };
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: variables.colors.background }]}>
-      <KeyboardAvoidingView 
+    <SafeAreaView
+      style={[
+        styles.safeArea,
+        { backgroundColor: variables.colors.background },
+      ]}
+    >
+      <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : undefined}
         style={styles.flex}
       >
         <ScrollView contentContainerStyle={styles.container}>
-          <View style={[styles.card, { 
-            backgroundColor: variables.colors.surface,
-            borderColor: variables.colors.border
-          }]}>
+          <View
+            style={[
+              styles.card,
+              {
+                backgroundColor: variables.colors.surface,
+                borderColor: variables.colors.border,
+              },
+            ]}
+          >
             <Text variant="h1">Welcome back</Text>
-            <Text 
-              variant="body" 
+            <Text
+              variant="body"
               color={variables.colors.text.muted}
               style={styles.subtitle}
             >
@@ -78,8 +88,8 @@ function SignInScreen({ navigation }: Props) {
             </View>
 
             {error ? (
-              <Text 
-                variant="label" 
+              <Text
+                variant="label"
                 color={variables.colors.error}
                 style={styles.errorText}
               >
@@ -87,14 +97,15 @@ function SignInScreen({ navigation }: Props) {
               </Text>
             ) : null}
 
-            <Button 
+            <Button
               title="Sign In"
               onPress={handleSubmit}
               style={styles.submitButton}
             />
 
+            <Text style={styles.linkText}>Need to create an account?</Text>
             <Button
-              title="Need to create an account? Sign up."
+              title="Sign up."
               variant="ghost"
               onPress={() => navigation.replace("SignUp")}
               style={styles.linkButton}
@@ -115,7 +126,6 @@ const styles = StyleSheet.create({
   },
   container: {
     flexGrow: 1,
-    justifyContent: "center",
     paddingHorizontal: 24,
     paddingVertical: 32,
   },
@@ -144,8 +154,12 @@ const styles = StyleSheet.create({
   submitButton: {
     marginTop: 8,
   },
-  linkButton: {
+  linkText: {
     marginTop: 16,
+    textAlign: "center",
+  },
+  linkButton: {
+    marginTop: 0,
   },
 });
 

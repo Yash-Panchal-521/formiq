@@ -24,6 +24,7 @@ import { AuthStackParamList } from "../navigation/types";
 import { useTheme } from "../theme/ThemeProvider";
 import type { MD3Theme } from "react-native-paper";
 import type { createVariables } from "../theme/variables";
+import { Button } from "../components/Button";
 
 type ThemeVariables = ReturnType<typeof createVariables>;
 type IoniconName = React.ComponentProps<typeof Ionicons>["name"];
@@ -46,7 +47,11 @@ const fitnessGoalOptions: OptionMeta<FitnessGoal>[] = [
   { value: "Get Stronger", label: "Get Stronger", icon: "barbell-outline" },
   { value: "Build Muscle", label: "Build Muscle", icon: "fitness-outline" },
   { value: "Get Lean", label: "Get Lean", icon: "walk-outline" },
-  { value: "Reduce Body Weight", label: "Reduce Body Weight", icon: "scale-outline" },
+  {
+    value: "Reduce Body Weight",
+    label: "Reduce Body Weight",
+    icon: "scale-outline",
+  },
   { value: "Improve Health", label: "Improve Health", icon: "heart-outline" },
   {
     value: "Improve Sports Performance",
@@ -64,7 +69,11 @@ const fitnessLevelOptions: OptionMeta<FitnessLevel>[] = [
 const equipmentOptions: OptionMeta<EquipmentOption>[] = [
   { value: "Dumbbells", label: "Dumbbells", icon: "barbell-outline" },
   { value: "Kettlebells", label: "Kettlebells", icon: "basketball-outline" },
-  { value: "Weight Machine", label: "Weight Machine", icon: "construct-outline" },
+  {
+    value: "Weight Machine",
+    label: "Weight Machine",
+    icon: "construct-outline",
+  },
   { value: "None", label: "None", icon: "remove-circle-outline" },
 ];
 
@@ -387,15 +396,12 @@ function SignUpScreen({ navigation }: Props) {
                 )
               )}
             </View>
-            <TouchableOpacity
-              style={styles.signInLink}
+            <Text style={styles.signInText}>Already our user?</Text>
+            <Button
+              variant="ghost"
+              title="Continue with your account."
               onPress={() => navigation.navigate("SignIn")}
-            >
-              <Text style={styles.signInText}>Already our user?</Text>
-              <Text style={styles.linkText}>
-                Continue with your existing account.
-              </Text>
-            </TouchableOpacity>
+            />
           </View>
         );
       case 2:
@@ -665,21 +671,11 @@ function OptionCard({
       onPress={onPress}
     >
       <View
-        style={[
-          optionStyles.iconBadge,
-          { backgroundColor: badgeBackground },
-        ]}
+        style={[optionStyles.iconBadge, { backgroundColor: badgeBackground }]}
       >
         <Ionicons name={iconName} size={24} color={iconColor} />
       </View>
-      <Text
-        style={[
-          optionStyles.label,
-          { color: labelColor },
-        ]}
-      >
-        {label}
-      </Text>
+      <Text style={[optionStyles.label, { color: labelColor }]}>{label}</Text>
     </TouchableOpacity>
   );
 }
@@ -885,6 +881,7 @@ const createStyles = (
       textAlign: "center",
       color: colors.onSurfaceVariant,
       fontSize: variables.typography.body.fontSize,
+      marginTop: variables.spacing.md,
     },
     linkText: {
       textAlign: "center",
